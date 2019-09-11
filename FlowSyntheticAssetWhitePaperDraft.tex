@@ -1,0 +1,299 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usepackage{verbatim}
+
+\usepackage[utf8]{inputenc}
+\renewcommand{\arraystretch}{1.5}
+ 
+
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+
+\title{Flow Synthetic Asset Whitepaper}
+\author{Antonia Chen}
+\date{September 2019}
+
+\usepackage{natbib}
+\usepackage{graphicx}
+
+\usetikzlibrary{arrows,calc}
+\usepackage{relsize}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+A new type of fungible Cryptocurrency - stablecoin of Euro  (\textbf{\textit{fEUR}}) is created by our \textbf{\textit{Flow}} protocol, to meet the DeFi market demand of stablecoins for non-USD currencies. Stablecoins of other currencies such as JPY will be created in the future.  
+
+\section{Liquidity Pool}
+A liquidity provider can run his/her own liquidity pool after depositing USD stablecoins to be used as collateral to open positions when new fEUR tokens are minted. Flow protocol support co-existence of multiple liquidity pools. 
+
+\section{Model Setup}
+The following model allows any trader to purchase  (\textbf{\textit{fEUR}}) with USD stablecoins through the protocol. 
+
+\begin{itemize}
+
+  \item $t$ - Time
+  
+  \item $m$ - Midpoint of Market Exchange Rate\\
+  $m_0$ - Midpoint of Market Exchange Rate at opening of a position\\
+  $m_t$ - Midpoint of Market Exchange Rate at time $t$
+  
+  \item $\theta$ - Market Fluctuation\\
+  $m_t=m_0(1+\theta_t)$ for any particular open position
+
+  \item $s$ -  Bid or Ask spread between the Flow bid price $m_t(1-s)$ or ask price $m_t(1+s)$ to the market midpoint $m_t$ set by the liquidity provider of a pool that
+  $$s=\frac{m_t(1+s)-m_t}{m_t}=\frac{m_t-m_t(1-s)}{m_t}$$
+
+  \item $v$ -  Number of fEUR token issued at opening of a position
+  
+  \item $\alpha$ - Ratio of extra collateral required to open an position for minting any fEUR token, e.g. 10\%. To mint $v$ fEUR tokens when market exchange rate is $m_0$, $\alpha m_0v$ unit of USD stablecoins are required to be locked on top of $m_0 v$ in a liquidity pool as collateral against market fluctuations. 
+
+  \item $c$ - Collateral of an open position that belong to the liquidity provider\\
+  For $v$ fEUR tokens issued, $c_0=\alpha m_0v$, $c_t=(1+\alpha)m_0v - m_tv$. 
+
+  \item $\beta$ - Liquidation Threshold, e.g. 5\%
+
+  \item $\gamma$ - Extreme threshold, e.g. 1\%
+
+  \item $\mu$ - Ratio of Liquidity Provider's collateral to the current value of fEUR at an open position, $\mu_0=\alpha$ and
+  $$ \mu_t=\frac{\alpha - \theta_t}{1+\theta_t}$$
+
+  \item $\lambda$ - Represent how far away the current Liquidity Provider's collateral ratio is from the Liquidation Threshold, $$\lambda_t=\beta-\mu_t$$
+  
+  \item $\delta$ - Proportion of Liquidity Provider's collateral to be given to the liquidator if a position is liquidated, 
+  $$ \delta_t=\frac{\lambda_t}{\beta-\gamma}=\frac{\beta-\mu_t}{\beta-\gamma}$$
+  
+ \end{itemize}
+
+\section{Mint Token \& Open Position}
+Suppose a trader is interested in purchasing $v$ unit of fEUR tokens when market exchange rate midpoint is $m_0$, he/she deposits unit of $m_0(1+s)v$ USD stablecoins into a liquidity pool, $v$ unit of fEUR tokens are minted by Flow protocol after the liquidity provider of the pool opens a position by locking the fund as collateral
+$$\{ m_0v  \quad +  \quad \alpha*m_0v \}$$
+
+\begin{itemize}
+    
+    \item $m_0v$ represents the current value of $v$ unit of fEUR tokens in USD
+    
+    \item $\alpha*m_0 v$ is the collateral against market fluctuation that belong to the liquidity provider, made of the spread part deposited by the trader $ s m_0 v$, and the rest deposited by the liquidity provider $(\alpha-s)m_0v$
+   
+    \item total value of the position equals to  $m_0v + \alpha*m_0v = (1+\alpha)m_0 v$
+
+\end{itemize}
+
+\section{Burn Token \& Close Position}
+Suppose a trader is interested in selling $v$ unit of fEUR tokens back to the liquidity pool when market exchange rate midpoint is $m_t$, he/she deposits the fEUR tokens into a liquidity pool, $v$ unit of fEUR tokens are burnt by Flow protocol after the liquidity provider of the pool closes the open position for the $v$ unit of fEUR tokens and transfers $m_t(1-s)v$ unit of USD stablecoins to the trader, and all remaining collateral of the position now belong to the liquidity provider and are returned into the pool. 
+
+\subsection{Trader sells immediately after opening position}
+Suppose trader wants to sell the token back to the liquidity pool immediately after buying $v$ unit of fEUR tokens when market exchange rate midpoint is $m_0$, he receives $(1-s)m_0 v$ USD stablecoins back and makes loss of $-2s m_0 v$ USD stablecoins. \par
+
+Liquidity provider closes the open position $\{ m_0v \quad  +  \quad \alpha*m_0v \}$,  $(\alpha +s)m_0 v$ collateral is released and returned to the pool and he makes profit of $2s m_0 v$ USD stablecoins. \par
+
+And $v$ unit of fEUR tokens are then burnt by Flow protocol.
+
+\subsection{Trader sells fEUR when EUR/USD $\downarrow$}
+Suppose EUR/USD goes down after opening of a position for $v$ fEUR tokens minted, i.e. $\theta_t<0$ and $m_t<m_0$, the position is now
+$$\{ m_t v   \quad +  \quad  [(1+\alpha)m_0-m_t]v \}$$
+$$\{ (1+\theta_t)m_0 v   \quad +  \quad  (\alpha-\theta_t)m_0 v \}$$
+where $(\alpha-\theta_t)m_0 v$ belong to the liquidity provider. \par
+
+If trader chooses to sell $v$ fEUR tokens back to the Liquidity pool, he receives $(1+\theta_t -s)m_0 v$ USD stablecoins back and makes loss of  $(\theta_t -2s)m_0 v$ USD stablecoins.\par
+
+Liquidity provider closes the open position $\{ (1+\theta_t)m_0 v   \quad +  \quad  (\alpha-\theta_t)m_0 v \}$, \\ $(\alpha-\theta_t)m_0 v$ collateral is released and returned to the pool and he makes profit of $(2s - \theta_t)m_0 v$ USD stablecoins. \par
+
+And $v$ unit of fEUR tokens are then burnt by Flow protocol.
+
+\subsection{Trader sells fEUR when EUR/USD $\uparrow$}
+Suppose EUR/USD goes up after opening of a position for $v$ fEUR tokens minted, i.e. $\theta_t>0$ and $m_t>m_0$, the position is now
+$$\{ m_t v   \quad +  \quad  [(1+\alpha)m_0-m_t]v \}$$
+$$\{ (1+\theta_t)m_0 v   \quad +  \quad  (\alpha-\theta_t)m_0 v \}$$
+where $(\alpha-\theta_t)m_0 v$ belong to the liquidity provider. \par
+
+The ratio of collateral that belongs to the liquidity provider to the current value of $v$ fEUR tokens
+$$ \mu_t=\frac{(\alpha-\theta_t)m_0 v}{(1+\theta_t)m_0 v}=\frac{\alpha - \theta_t}{1+\theta_t}$$\par
+
+When EUR/USD goes high enough ($\theta_t$ large enough), there is a risk that the current value of the fEUR tokens in USD stablecoins may exceed total collateral locked in the position, i.e. $(1+\theta_t)m_0 v> (1+\alpha)m_0 v$,  in which case the liquidity provider will not be able to provide enough USD stablecoins if a trader tries to sell fEUR tokens back. A liquidity provider may choose to add more USD stablecoins into the open position to top up his collateral to increase $\mu$. While if he fails to top up in time, the position is at risk. \par 
+
+The Liquidation Threshold $\beta$ and the Extreme Threshold $\gamma$ are utilized to avoid this problem. 
+\begin{itemize}
+    \item When Liquidity provider collateral ratio $\mu_t$ goes down and reaches the Liquidation Threshold $\beta$, any liquidator is allowed to close the position for the liquidity provider and receives \textbf{\textit{some proportional part}} of the liquidity provider collateral as reward, depending on how small the ratio is.
+    \item Once Liquidity provider collateral ratio $\mu_t$ becomes too small and reaches the Extreme Threshold  $\gamma$, \textbf{\textit{all}} liquidity provider collateral will be given to liquidators as reward to encourage them to close the position for the liquidity provider.
+\end{itemize}
+ 
+\subsubsection{Liquidity provider collateral ratio above Liquidation Threshold}
+When  $\mu_t>\beta$, we have
+$$\theta_t<\frac{\alpha - \beta}{1+ \beta}$$
+
+For $\alpha = 10\%$ and $\beta = 5\%$, when $\mu_t>\beta$, we have $\theta_t<4.76\%$ .\par
+
+If trader chooses to sell $v$ fEUR tokens back to the Liquidity pool to close the open position, he receives $(1+\theta_t -s)m_0 v$ USD stablecoins back and makes profit of  $(\theta_t -2s)m_0 v$ USD stablecoins.\par
+
+Liquidity provider closes the open position
+$$\{ (1+\theta_t)m_0 v   \quad +  \quad  (\alpha-\theta_t)m_0 v \}, \\ (\alpha-\theta_t)m_0 v$$
+, collateral is released and returned to the pool and he makes loss of $(2s - \theta_t)m_0 v$ USD stablecoins. \par
+
+And $v$ unit of fEUR tokens are then burnt by Flow protocol.
+
+\subsubsection{Liquidity provider collateral ratio below Extreme Threshold}
+When  $\mu_t\in [0,\gamma$), we have
+$$\frac{\alpha - \gamma}{1+ \gamma}<\theta_t \leq \alpha$$
+
+For $\alpha = 10\%$ and $\gamma = 1\%$, when $\mu_t\in [0,\gamma$), we have $\theta_t \in (8.91\%, 10\%]$ .
+
+When $\mu_t$ goes below the Extreme Threshold, the position is at high risk, that \textbf{\textit{all}} liquidity provider collateral will be given to liquidators as reward to encourage them to close the position for the liquidity provider.\par
+
+If a liquidator would like to close an open position of $v$ fEUR tokens when the market exchange rate midpoint is $m_t$, he could
+
+\begin{itemize}
+
+    \item Buy $v$ fEUR tokens from any liquidity provider at cost $(1+s)m_t v$ or at any exchange at a similar cost. 
+    
+    \item Deposit the tokens into the liquidity pool to close the position (by selling the exact amount of fEUR tokens at bid price $(1-s)m_t$ back to close the original open position) and receive the sale return of the fEUR tokens plus \textbf{\textit{everything}} belongs to the liquidity provider in this position (including the income from bid spread at close of the position):
+    $$(1-s)m_t v + [(1+\alpha)m_0 - m_t]v + s m_t v$$
+    
+    \item Make profit $\Pi_l=(\alpha - \theta_t - s)m_0 v$ if his tokens are purchased from a liquidity provider.
+
+\end{itemize}
+
+
+\subsubsection{Liquidity provider collateral ratio in between LT \& ET}
+When $\mu_t \in [\gamma,\beta]$, we have
+$$\mu_t=\frac{c_t}{m_t v}=\frac{(\alpha - \theta_t)m_0 v}{(1+\theta_t)m_0 v}$$
+where $c_t$ is the collateral of an open position that belong to the liquidity provider at time $t$ that $c_t=\mu_t m_t v$. 
+
+If a liquidator would like to close an open position of $v$ fEUR tokens when the market exchange rate midpoint is $m_t$ and $\mu_t \in [\gamma,\beta]$, he could
+
+\begin{itemize}
+
+    \item Buy $v$ fEUR tokens from any liquidity provider at cost $(1+s)m_t v$ or at any exchange at a similar cost. 
+    
+    \item Deposit the tokens into the liquidity pool to close the position (by selling the exact amount of fEUR tokens at bid price $(1-s)m_t$ back to close the original open position) and receive the sale return of the fEUR tokens plus \textbf{\textit{some proportion}} of the collateral belongs to the liquidity provider in the position and the income from bid spread at close of the position:
+    $$(1-s)m_t v + \delta(c_t + s m_t v)$$
+    where $\delta$ is the proportion of Liquidity Provider's collateral to be given to the liquidator if a position is liquidated that $$ \delta_t=\frac{\lambda_t}{\beta-\gamma}=\frac{\beta-\mu_t}{\beta-\gamma}$$
+    and $\lambda$ represents how far away the current Liquidity Provider's collateral ratio is from the Liquidation Threshold that $$\lambda_t=\beta-\mu_t$$
+    
+    \begin{center}
+    \begin{tikzpicture}[scale=0.9]
+
+    \draw[<->] (9,0) node[below]{$\lambda(\mu_t)$} -- (0,0) -- (0,6) node[left]{$\delta(\mu_t)$};
+    \draw [thick, blue] (0,0) -- (7.5,4.5);
+    \draw [dashed] (7.5,4.5) -- (7.5,0);
+    \draw [dashed] (7.5,4.5) -- (0,4.5);   
+
+    \node[dotted,label=left:$0$] at (0,0) (int0) {};
+    \node[dotted,label=below:$\beta-\gamma$] at (7.5,0) (int1) {};
+    \node[dotted,label=left:$100\%$] at (0,4.5) (int2) {};
+    \node[dotted,label=below:{$\delta=\frac{\lambda}{\beta - \gamma}$}] at (6,3.3) (int3) {};
+
+    \end{tikzpicture}
+    \end{center}
+
+    \item Make profit 
+    $$\Pi_l = \delta(c_t + s m_t v) -2s m_t v$$
+    if his tokens are purchased from a liquidity provider.\\
+    Since both $c_t$ and $\delta_t$ depend on $\mu_t$ that $\Pi_l$ is maximized when 
+    $$\frac{\partial \Pi_l}{\partial \mu_t}=\frac{(\beta - s - 2\mu_t)m_t v}{\beta - \gamma}=0$$
+    Thus, we have 
+    $$\mu_t^{max}=\frac{\beta - s}{2}$$ and 
+    $$\Pi_l^{max}(\mu_t)=\frac{(\beta + s)^2 m_t v}{4(\beta - \gamma)}-2s m_t v$$
+    \\
+    For $\beta = 5\%$, $\gamma = 1\%$, $s=0.5\%$, $v=10,000$ and $m_t=1.2$, when $\mu_t\in [\gamma,\beta]$, we have $\mu_t^{max}=2.25\%$ and $\Pi_l^{max}=106.875$ USD stablecoins.
+
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+
+\draw[<->] (9,0) node[below]{$\mu_t$} -- (0,0) -- (0,6) node[left]{$\Pi_l$};
+\draw[purple, thick, domain=0.5:7] plot (\x, {-1.575 + 3.375*\x - 0.45*\x*\x});
+\draw [dashed] (3.75,4.784375) -- (3.75,0);
+\draw [dashed] (3.75,4.784375) -- (0,4.784375);   
+
+\node[dotted,label=left:$0$] at (0,0) (int0) {};
+\node[dotted,label=above:$max$] at (3.75,4.784375) (int1) {};
+\node[dotted,label=below:$\frac{\beta - s}{2}$] at (3.75,0) (int2) {};
+\node[dotted,label=left:$\Pi_l^{max}$] at (0,4.784375) (int3) {};
+
+\end{tikzpicture}
+\end{center}
+
+After the position is liquidated by a liquidator, the liquidity provider receives the remaining proportion of the collateral, 
+$$(1-\delta)(c_t+s m_t v)>0$$
+and make a loss of
+$$(1-\delta)(c_t+s m_t v) - (\alpha-s)m_0v<0$$
+
+\section{One Position in One Liquidity Pool}
+As traders place the first, second, third, $i_{th}$ to $n_{th}$ trade orders to buy fEUR tokens, open positions are created at each order as collateral. While in reality, liquidity provider of a liquidity pool combines all positions together and holds only one position that for total open unit of fEUR tokens
+$$V=\sum_{i=1}^n v^i=v^1+v^2+v^3+...+v^n$$
+
+Total collateral that belong to the liquidity provider
+$$C_t=\sum_{i=1}^n (\alpha - \theta_t^i)m_t^i v^i=\mu_t m_t V$$
+
+as ratio of liquidity provider's collateral to the current value of all minted fEUR tokens backed up by the pool
+$$ \mu_t=\frac{C_t}{m_t V}$$
+
+Now when $\mu_t \in [\gamma,\beta]$, i.e. the liquidity provider collateral ratio falls in between the Extreme Threshold and Liquidation Threshold, any liquidator is allowed to liquidate a fraction or the entire open position in the pool, by
+
+\begin{itemize}
+
+    \item Buy $\rho V$ fEUR tokens from any liquidity provider at cost $(1+s)m_t \rho V$ or at any exchange at a similar cost, where $\rho \in (0,1]$ represent the fraction of the open position that liquidator would like to close. 
+    
+    \item Deposit the tokens into the liquidity pool to close the position (by selling the exact amount of fEUR tokens at bid price $(1-s)m_t$ back to close the original open position) and receive the sale return of the fEUR tokens plus \textbf{\textit{some proportion}} of the collateral belongs to the liquidity provider in the fraction of the position and the income from bid spread at close of the fraction of the position:
+    $$(1-s)m_t \rho V + \delta(\rho C_t + s m_t \rho V)$$
+    where $\delta$ is the proportion of Liquidity Provider's collateral to be given to the liquidator if a position is liquidated that $$ \delta_t=\frac{\lambda_t}{\beta-\gamma}=\frac{\beta-\mu_t}{\beta-\gamma}$$
+    and $\lambda$ represents how far away the current Liquidity Provider's collateral ratio is from the Liquidation Threshold that $$\lambda_t=\beta-\mu_t$$
+    
+    \begin{center}
+    \begin{tikzpicture}[scale=0.9]
+
+    \draw[<->] (9,0) node[below]{$\lambda(\mu_t)$} -- (0,0) -- (0,6) node[left]{$\delta(\mu_t)$};
+    \draw [thick, blue] (0,0) -- (7.5,4.5);
+    \draw [dashed] (7.5,4.5) -- (7.5,0);
+    \draw [dashed] (7.5,4.5) -- (0,4.5);   
+
+    \node[dotted,label=left:$0$] at (0,0) (int0) {};
+    \node[dotted,label=below:$\beta-\gamma$] at (7.5,0) (int1) {};
+    \node[dotted,label=left:$100\%$] at (0,4.5) (int2) {};
+    \node[dotted,label=below:{$\delta=\frac{\lambda}{\beta - \gamma}$}] at (6,3.3) (int3) {};
+
+    \end{tikzpicture}
+    \end{center}
+
+    \item Make profit 
+    $$\Pi_l =\delta(\rho C_t + s m_t \rho V) -2s m_t \rho V$$ 
+    if his tokens are purchased from a liquidity provider.\\
+    Since both $C_t$ and $\delta_t$ depend on $\mu_t$ that $\Pi_l$ is maximized when 
+    $$\frac{\partial \Pi_l}{\partial \mu_t}=\frac{(\beta - s - 2\mu_t)\rho m_t V}{\beta - \gamma}=0$$
+    Thus, we have 
+    $$\mu_t^{max}=\frac{\beta - s}{2}$$ and 
+    $$\Pi_l^{max}(\mu_t)=\frac{(\beta + s)^2 m_t \rho V}{4(\beta - \gamma)}-2s m_t \rho V$$
+    \\
+    For $\beta = 5\%$, $\gamma = 1\%$, $s=0.5\%$, $v=100,000$, $m_t=1.2$ and $\rho =20\%$, when $\mu_t\in [\gamma,\beta]$, we have $\mu_t^{max}=2.25\%$ and $\Pi_l^{max}=213.75$ USD stablecoins.
+
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+
+\draw[<->] (9,0) node[below]{$\mu_t$} -- (0,0) -- (0,6) node[left]{$\Pi_l$};
+\draw[purple, thick, domain=0.5:7] plot (\x, {-1.575 + 3.375*\x - 0.45*\x*\x});
+\draw [dashed] (3.75,4.784375) -- (3.75,0);
+\draw [dashed] (3.75,4.784375) -- (0,4.784375);   
+
+\node[dotted,label=left:$0$] at (0,0) (int0) {};
+\node[dotted,label=above:$max$] at (3.75,4.784375) (int1) {};
+\node[dotted,label=below:$\frac{\beta - s}{2}$] at (3.75,0) (int2) {};
+\node[dotted,label=left:$\Pi_l^{max}$] at (0,4.784375) (int3) {};
+
+\end{tikzpicture}
+\end{center}
+
+After the $\rho$ fraction of the position is liquidated by a liquidator, the liquidity provider receives the remaining fraction of spread income from buying back fEUR tokens $(1-\delta)s m_t \rho V$, and keeps the remaining fraction of collateral of the closed position $(1-\delta) \rho C$. And the new position becomes 
+$$\{(1-\rho)m_t V \quad \quad + \quad \quad C^{old}(1-\delta \rho) + (1-\delta)s m_t \rho V\}$$
+and the new liquidity provider collateral ratio
+$$\mu_t^{new}=\frac{C^{new}}{(1-\rho)m_t V}=\frac{C^{old}(1-\delta \rho) + (1-\delta)s m_t \rho V}{(1-\rho)m_t V}>\mu^{old}$$
+
+If $\mu_t^{new}>\beta$, there will be no immediate arbitrage opportunity. While if we still have $\mu_t^{new} \leq \beta$, any liquidator can keep closing more fraction of the open position, until the latest $\mu_t>\beta$, i.e. when the current liquidity provider collateral ratio exceeds the Liquidation Threshold.
+
+\end{document}
